@@ -10,7 +10,7 @@ const before = app => app.use(cors({ origin: true, credentials: true }));
 
 module.exports = {
 	devServer: {
-		hot: false, // Will cause the issue -> the extra HMR webpack module confuses the esm-webpack-plugin to add extra default exports
+		hot: true, // Will cause the issue -> the extra HMR webpack module confuses the esm-webpack-plugin to add extra default exports
 		port: 3000,
 		publicPath,
 		before,
@@ -28,7 +28,16 @@ module.exports = {
 	},
 	node: false,
 	plugins: [
-		new EsmWebpackPlugin(),
+		new EsmWebpackPlugin({
+			exclude(fileName) {
+				// Exclude if:
+				//	a. not a js file (this is already done by the default `exclude`,
+				//	   but since we are using a custom one, need to do the check
+				//  b. is a devServer.hot file
+				return !/\.[cm]?js$/i.test(fileName) ||
+					/\.hot-update\.js$/i.test(fileName);
+			}
+		}),
 	],
 	mode: process.env.NODE_ENV === 'development' ? 'development' : 'production',
 };
